@@ -261,7 +261,7 @@ export default function Home() {
   return (
     <main>
       <header className="hero">
-        <div className="version">BATTING FORM ANALYZER · ver.11.0</div>
+        <div className="version">BATTING FORM ANALYZER · ver.11.1</div>
         <h1>打撃フォーム分析</h1>
         <p>比較選手との「違い」を動画から見つけ、改善の優先順位を整理します。</p>
       </header>
@@ -324,7 +324,7 @@ export default function Home() {
         <div className="feature-results">{(result.features||[]).map((row:any)=><article className="result-card" key={row['表示名']}><div className="result-card-head"><h3>{row['表示名']}</h3><span className={`level ${row['比較判定']}`}>{row['比較判定']}</span></div><div className="value-flow"><b>{row['比較選手表示']}</b><span>→</span><b>{row['自分表示']}</b></div><p>{row['差の方向']}</p><small>{row['計測内容']}</small></article>)}</div>
 
         <h2>今回優先して確認したいポイント</h2>
-        <div className="advice-list">{(result.advice||[]).map((row:any,i:number)=><article className="advice" key={`${row['観点']}-${i}`}><div className="rank">{i+1}</div><div><h3>{row['観点']}</h3><p><b>比較結果：</b>{row['比較結果']}</p><p><b>動作の特徴：</b>{row['動作の特徴']}</p><p><b>改善の方向性：</b>{row['改善の方向性']}</p><p><b>練習例：</b>{row['練習例']}</p><small>研究上の位置づけ：{row['研究上の位置づけ']}</small></div></article>)}</div>
+        <div className="advice-list">{(result.advice||[]).map((row:any,i:number)=><article className="advice" key={`${row['観点']}-${i}`}><div className="rank">{i+1}</div><div><h3>{row['観点']}</h3><p><b>比較結果：</b>{row['比較結果']}</p><p><b>動作の特徴：</b>{row['動作の特徴']}</p><p><b>改善の方向性：</b>{row['改善の方向性']}</p><p><b>練習例：</b>{row['練習例']}</p>{row['参考動画URL'] && <div className="practice-video"><div><b>参考動画</b><span>{row['参考動画提供元']}</span><strong>{row['参考動画タイトル']}</strong>{row['参考動画メモ'] && <small>{row['参考動画メモ']}</small>}</div><a href={row['参考動画URL']} target="_blank" rel="noopener noreferrer">▶ 参考動画を見る</a></div>}<small>研究上の位置づけ：{row['研究上の位置づけ']}</small></div></article>)}</div>
 
         <h2>身体負担に関連する動作</h2>
         <div className="body-load"><strong>{result.body_load?.overall_label}</strong><p>怪我の診断・予測ではなく、先行研究で議論される動作との照合です。</p>{(result.body_load?.regions||[]).map((row:any)=><div className="body-row" key={row['部位']}><b>{row['部位']}</b><span>{row['判定']}</span><small>{row['主な計測proxy']}</small></div>)}</div>
@@ -342,7 +342,7 @@ export default function Home() {
 
       {selectedPlayer && selectedPlayer.histories.length > 0 && <section className="step"><span>HISTORY</span><h2>{selectedPlayer.name} の解析履歴</h2><div className="history-list">{selectedPlayer.histories.map(h=><div className="history-item" key={h.id}><time>{new Date(h.createdAt).toLocaleString('ja-JP')}</time><b>{h.overall}</b><span>近い：{h.best}</span><span>差大：{h.lowest}</span></div>)}</div></section>}
 
-      <footer>Batting Form Analyzer ver.11.0 · Vercel / Next.js / FastAPI / MediaPipe</footer>
+      <footer>Batting Form Analyzer ver.11.1 · Vercel / Next.js / FastAPI / MediaPipe</footer>
     </main>
   );
 }

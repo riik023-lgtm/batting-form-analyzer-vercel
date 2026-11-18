@@ -1374,6 +1374,63 @@ def save_difference_direction_chart(df):
     return out
 
 
+
+
+PRACTICE_VIDEOS = {
+    "身体を開くな": {
+        "title": "Front Shoulder Closed Baseball Hitting Drill",
+        "provider": "Top Level LA Baseball Academy",
+        "url": "https://www.youtube.com/watch?v=VNZvUp-Q_OQ",
+        "note": "前肩が早く開かないようにするティードリル。肩の回旋量を見直す際の参考。",
+    },
+    "割れを作れ": {
+        "title": "Offset Rotation Drill / Flow Hook 'Em Drill / Step Back Pivot Pick Drill",
+        "provider": "Driveline Baseball",
+        "url": "https://www.youtube.com/watch?v=_km9w9vqqC4&t=28s",
+        "note": "0:28からのOffset Rotation Drillを中心に、骨盤と上半身の回転順序を確認。",
+    },
+    "ボールを引きつけろ": {
+        "title": "3 Drills For Better Connection In The Baseball Swing",
+        "provider": "Hitting Done Right - HDR",
+        "url": "https://www.youtube.com/watch?v=j25A3Mwz0VE&t=50s",
+        "note": "手部と体幹のつながり、短く直接的なバット軌道を確認する3ドリル。",
+    },
+    "軸をぶらすな": {
+        "title": "Hitting & Proper Weight Transfer Drill",
+        "provider": "FieldTurf / Todd Whitting",
+        "url": "https://www.youtube.com/watch?v=txrucZmEPPE",
+        "note": "前方移動と回転のつながりを確認する体重移動ドリル。体幹中心の流れを見る際の参考。",
+    },
+    "壁を作れ": {
+        "title": "Offset Rotation / Step Back Pivot Pick Drill",
+        "provider": "Driveline Baseball",
+        "url": "https://www.youtube.com/watch?v=_km9w9vqqC4&t=319s",
+        "note": "5:19からのStep Back Pivot Pick Drill。前脚で受け止めながら回転する感覚の参考。",
+    },
+    "頭を残せ": {
+        "title": "Baseball Hitting Drills to Work on the Correct Head Movement",
+        "provider": "DNA Sports",
+        "url": "https://www.youtube.com/watch?v=KIoJpTey0Hk",
+        "note": "頭を無理に固定せず、コンタクトまでの頭部移動を確認するためのドリル。",
+    },
+    "体重移動をしろ": {
+        "title": "Hitting & Proper Weight Transfer Drill",
+        "provider": "FieldTurf / Todd Whitting",
+        "url": "https://www.youtube.com/watch?v=txrucZmEPPE",
+        "note": "打撃時の体重移動と踏み込みのつながりを確認する実演。",
+    },
+    "腰を使え": {
+        "title": "Offset Rotation Drill / Flow Hook 'Em Drill / Step Back Pivot Pick Drill",
+        "provider": "Driveline Baseball",
+        "url": "https://www.youtube.com/watch?v=_km9w9vqqC4&t=28s",
+        "note": "骨盤回転を単独で速くするのではなく、上半身との連動を確認する回旋ドリル。",
+    },
+}
+
+def _practice_video_for(name):
+    return PRACTICE_VIDEOS.get(name, {})
+
+
 def _advice_source_for(name):
     mapping = {
         "身体を開くな": "骨盤・肩の回転タイミングに関する研究を参考。回転の大小だけで良否は決めません。",
@@ -1407,6 +1464,10 @@ def generate_improvement_advice(score_df, ref, tar):
             "改善の方向性": direction,
             "練習例": training,
             "研究上の位置づけ": _advice_source_for(name),
+            "参考動画タイトル": _practice_video_for(name).get("title", ""),
+            "参考動画提供元": _practice_video_for(name).get("provider", ""),
+            "参考動画URL": _practice_video_for(name).get("url", ""),
+            "参考動画メモ": _practice_video_for(name).get("note", ""),
             "差の尺度": float(abs(row["差の尺度"])),
         })
 
@@ -1461,6 +1522,10 @@ def generate_improvement_advice(score_df, ref, tar):
             "改善の方向性": "同じ撮影条件で複数回測定し、毎回同じ傾向が出るか確認してください。",
             "練習例": "同じ条件で3〜5スイング撮影し、履歴で比較。",
             "研究上の位置づけ": "インパクト再現性研究では複数試技のばらつきを扱っています。",
+            "参考動画タイトル": "",
+            "参考動画提供元": "",
+            "参考動画URL": "",
+            "参考動画メモ": "",
             "差の尺度": 0.0,
         })
     return pd.DataFrame(rows)

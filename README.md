@@ -1,4 +1,4 @@
-# Batting Form Analyzer ver.11.0 — Vercel edition
+# Batting Form Analyzer ver.11.1 — Vercel edition
 
 Streamlit版 ver.10.1 の解析ロジックを、スマホ向けの Next.js UI + FastAPI に移植した最初のVercel版です。
 
@@ -22,7 +22,7 @@ Streamlit版 ver.10.1 の解析ロジックを、スマホ向けの Next.js UI +
 
 Vercel FunctionsのHTTPリクエストは4.5MB制限があるため、動画はブラウザからVercel Blobへ直接送ります。Python APIにはBlob URLだけを送ります。
 
-ver.11.0初版では、解析中にPythonから取得できるようBlobはランダムURLのpublic objectとして保存します。UIに削除ボタンを設け、さらにBlob TTLを1日に設定しています。より厳密なプライバシーが必要な運用では、次版でPrivate Blob + signed GET URLに切り替えてください。
+ver.11.1初版では、解析中にPythonから取得できるようBlobはランダムURLのpublic objectとして保存します。UIに削除ボタンを設け、さらにBlob TTLを1日に設定しています。より厳密なプライバシーが必要な運用では、次版でPrivate Blob + signed GET URLに切り替えてください。
 
 ## Vercel上の注意
 
@@ -47,3 +47,12 @@ vercel dev -L
 ```
 
 または各サービスを個別に起動できます。
+
+## 改善ポイントの参考動画
+
+ver.11.1では、改善ポイント上位3項目の練習例に、実際のYouTube参考動画を固定で紐づけています。
+動画はDriveline Baseball、Hitting Done Right、FieldTurf/Todd Whitting、Top Level LA Baseball Academy、DNA Sportsなどの公開動画です。
+
+- 動画は本アプリが制作・管理するものではありません。提供元の都合で削除・非公開になる可能性があります。
+- 動画は練習方法の参考であり、本アプリの解析結果や先行研究そのものの根拠ではありません。
+- 痛みがある場合は動画の練習を無理に行わず、医療・指導の専門家へ相談してください。

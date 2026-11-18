@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field, HttpUrl
 import analysis_engine as engine
 import risk_analysis
 
-app = FastAPI(title="Batting Form Analyzer API", version="11.0")
+app = FastAPI(title="Batting Form Analyzer API", version="11.1")
 
 
 class Roi(BaseModel):
@@ -101,7 +101,7 @@ def _analysis_meta(analysis):
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "version": "11.0", "runtime": "python"}
+    return {"ok": True, "version": "11.1", "runtime": "python"}
 
 
 @app.post("/api/suggest-roi")
@@ -159,7 +159,7 @@ def analyze(payload: AnalyzeRequest):
 
         body = result["body_load"]
         return {
-            "version": "11.0",
+            "version": "11.1",
             "overall_comparison_label": result.get("overall_comparison_label", "評価保留"),
             "best_item": result.get("best_item", ""),
             "lowest_item": result.get("lowest_item", ""),

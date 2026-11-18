@@ -1,0 +1,8 @@
+【GitHubへアップロード】
+1. このZIPを解凍
+2. 解凍後に見える frontend / backend / vercel.toml / README.md / その他ファイルをすべて選択
+3. GitHubの batting-form-analyzer-vercel → Add file → Upload files
+4. すべてドラッグ＆ドロップ
+5. Commit message: Update Vercel version to 11.1 with practice videos
+6. Commit directly to main
+7. VercelでRedeploy
