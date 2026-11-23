@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import font_manager
 
-APP_VERSION = "10.1"
+APP_VERSION = "11.2"
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_CACHE_DIR = Path(os.environ.get("BFA_MODEL_CACHE_DIR", "/tmp/bfa_models" if os.environ.get("VERCEL") else str(BASE_DIR)))
 MODEL_CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -45,75 +45,75 @@ HAND_MODEL = {
 
 FEATURES = {
     "身体を開くな": {
-        "display_name": "肩の回旋量",
+        "display_name": "身体の開き",
         "direction_positive": "大きい",
         "direction_negative": "小さい",
         "key": "shoulder_opening",
         "unit": "degree",
-        "description": "構えからインパクトまでの肩の回転量",
+        "description": "構えからインパクトまでの上半身の開き具合",
         "tolerance": 18.0,
     },
     "割れを作れ": {
-        "display_name": "肩―骨盤捻転差",
+        "display_name": "割れ",
         "direction_positive": "大きい",
         "direction_negative": "小さい",
         "key": "hip_shoulder_separation",
         "unit": "degree",
-        "description": "インパクト前の肩と骨盤の最大捻転差",
+        "description": "スイング前にできる肩と腰のひねりの差",
         "tolerance": 15.0,
     },
     "ボールを引きつけろ": {
-        "display_name": "手部―体幹距離",
+        "display_name": "ボールの引きつけ",
         "direction_positive": "遠い",
         "direction_negative": "近い",
         "key": "hand_torso_distance",
         "unit": "shoulder-width ratio",
-        "description": "インパクト時の手と体幹中心の距離",
+        "description": "インパクト時に手を身体の近くまで引きつけられているか",
         "tolerance": 0.30,
     },
     "軸をぶらすな": {
-        "display_name": "体幹中心の横移動",
+        "display_name": "軸のブレ",
         "direction_positive": "多い",
         "direction_negative": "少ない",
         "key": "axis_sway",
         "unit": "shoulder-width ratio",
-        "description": "画像座標で見た構え〜インパクトの体幹中心の横移動幅",
+        "description": "構えからインパクトまでに身体の軸が横へどれくらい動いたか",
         "tolerance": 0.35,
     },
     "壁を作れ": {
-        "display_name": "前脚膝角度",
+        "display_name": "前脚の壁",
         "direction_positive": "伸びている",
         "direction_negative": "曲がっている",
         "key": "front_knee_angle",
         "unit": "degree",
-        "description": "インパクト時の前脚膝角度",
+        "description": "インパクト時に前脚でどの程度受け止められているか",
         "tolerance": 20.0,
     },
     "頭を残せ": {
-        "display_name": "頭部移動量",
+        "display_name": "頭の残り",
         "direction_positive": "多い",
         "direction_negative": "少ない",
         "key": "head_movement",
         "unit": "shoulder-width ratio",
-        "description": "画像座標で見た構え〜インパクトの頭部移動量",
+        "description": "構えからインパクトまでに頭がどれくらい動いたか",
         "tolerance": 0.30,
     },
     "体重移動をしろ": {
-        "display_name": "骨盤中心の水平移動",
+        "display_name": "体重移動",
         "direction_positive": "多い",
         "direction_negative": "少ない",
         "key": "weight_transfer",
         "unit": "shoulder-width ratio",
-        "description": "画像座標で見た骨盤中心の構え〜インパクト水平移動量",
+        "description": "構えからインパクトまでに身体を前方へどれくらい移動させたか",
         "tolerance": 0.35,
     },
     "腰を使え": {
-        "display_name": "骨盤回転速度",
+        "display_name": "腰の回転",
         "direction_positive": "速い",
         "direction_negative": "遅い",
         "key": "hip_rotation_speed",
         "unit": "degree/sec",
-        "description": "World座標で見たインパクト前後の最大骨盤回転速度",
+        "description": "インパクト前後で腰がどれくらい速く回転しているか",
         "tolerance": 180.0,
     },
 }

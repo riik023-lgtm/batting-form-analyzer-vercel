@@ -4,14 +4,14 @@ import { upload } from '@vercel/blob/client';
 import { useEffect, useMemo, useState } from 'react';
 
 const FEATURE_OPTIONS = [
-  ['身体を開くな', '肩の回旋量'],
-  ['割れを作れ', '肩―骨盤捻転差'],
-  ['ボールを引きつけろ', '手部―体幹距離'],
-  ['軸をぶらすな', '体幹中心の横移動'],
-  ['壁を作れ', '前脚膝角度'],
-  ['頭を残せ', '頭部移動量'],
-  ['体重移動をしろ', '骨盤中心の水平移動'],
-  ['腰を使え', '骨盤回転速度'],
+  ['身体を開くな', '身体の開き'],
+  ['割れを作れ', '割れ'],
+  ['ボールを引きつけろ', 'ボールの引きつけ'],
+  ['軸をぶらすな', '軸のブレ'],
+  ['壁を作れ', '前脚の壁'],
+  ['頭を残せ', '頭の残り'],
+  ['体重移動をしろ', '体重移動'],
+  ['腰を使え', '腰の回転'],
 ] as const;
 
 type Roi = { center: number; width: number };
@@ -153,7 +153,7 @@ export default function Home() {
 
   async function uploadVideo(file: File, role: string, progressStart: number, progressSpan: number) {
     const blob = await upload(`batting/${role}-${Date.now()}-${file.name}`, file, {
-      access: 'public',
+      access: 'private',
       handleUploadUrl: '/blob-upload',
       multipart: true,
       onUploadProgress: ({ percentage }) => setUploadProgress(progressStart + percentage * progressSpan / 100),
@@ -261,7 +261,7 @@ export default function Home() {
   return (
     <main>
       <header className="hero">
-        <div className="version">BATTING FORM ANALYZER · ver.11.1</div>
+        <div className="version">BATTING FORM ANALYZER · ver.11.2</div>
         <h1>打撃フォーム分析</h1>
         <p>比較選手との「違い」を動画から見つけ、改善の優先順位を整理します。</p>
       </header>
@@ -342,7 +342,7 @@ export default function Home() {
 
       {selectedPlayer && selectedPlayer.histories.length > 0 && <section className="step"><span>HISTORY</span><h2>{selectedPlayer.name} の解析履歴</h2><div className="history-list">{selectedPlayer.histories.map(h=><div className="history-item" key={h.id}><time>{new Date(h.createdAt).toLocaleString('ja-JP')}</time><b>{h.overall}</b><span>近い：{h.best}</span><span>差大：{h.lowest}</span></div>)}</div></section>}
 
-      <footer>Batting Form Analyzer ver.11.1 · Vercel / Next.js / FastAPI / MediaPipe</footer>
+      <footer>Batting Form Analyzer ver.11.2 · Vercel / Next.js / FastAPI / MediaPipe</footer>
     </main>
   );
 }

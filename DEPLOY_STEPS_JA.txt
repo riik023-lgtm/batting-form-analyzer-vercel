@@ -1,4 +1,4 @@
-【Vercel版 ver.11.1 導入手順】
+【Vercel版 ver.11.2 導入手順】
 
 1. GitHubを開く
 2. New repository
@@ -22,7 +22,7 @@
 
 17. 公開URLの末尾に /api/health を付ける
     例: https://xxxxx.vercel.app/api/health
-18. {"ok":true,"version":"11.1"...} と出ればPython API接続成功
+18. {"ok":true,"version":"11.2"...} と出ればPython API接続成功
 19. トップURLをスマホSafari/Chromeで開いて動画解析をテスト
 
 ※ MediaPipe/OpenCVが大きすぎるというDeployエラーの場合

@@ -1,0 +1,10 @@
+GitHubへの更新方法
+
+このZIPを解凍し、中身を既存の batting-form-analyzer-vercel リポジトリへアップロードしてください。
+同名ファイルは上書き、新しい CHANGELOG_v11_2.txt は追加されます。
+Commit message例: Update to ver.11.2 portrait UI and simple feature names
+
+Vercel BlobをPrivateで作成する場合:
+- StoreのAccess: Private
+- Add a read-write token env var to this connection: ON
+- 接続後に再デプロイ

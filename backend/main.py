@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field, HttpUrl
 import analysis_engine as engine
 import risk_analysis
 
-app = FastAPI(title="Batting Form Analyzer API", version="11.1")
+app = FastAPI(title="Batting Form Analyzer API", version="11.2")
 
 
 class Roi(BaseModel):
@@ -43,7 +43,18 @@ def _download(url: str, prefix: str) -> Path:
         suffix = ".mp4"
     path = Path(tempfile.gettempdir()) / f"bfa_{prefix}_{uuid.uuid4().hex}{suffix}"
     try:
-        with requests.get(url, stream=True, timeout=(15, 120)) as response:
+        headers = {}
+        # Private Vercel BlobはURLだけでは取得できないため、接続時に作成した
+        # BLOB_READ_WRITE_TOKENをサーバー側だけで使う。
+        if ".private.blob.vercel-storage.com" in url:
+            token = os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip()
+            if not token:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Private Blobの読取トークンが設定されていません。Vercel Storage接続でread-write tokenを有効にしてください。",
+                )
+            headers["Authorization"] = f"Bearer {token}"
+        with requests.get(url, stream=True, timeout=(15, 120), headers=headers) as response:
             response.raise_for_status()
             with path.open("wb") as f:
                 for chunk in response.iter_content(chunk_size=1024 * 1024):
@@ -101,7 +112,7 @@ def _analysis_meta(analysis):
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "version": "11.1", "runtime": "python"}
+    return {"ok": True, "version": "11.2", "runtime": "python"}
 
 
 @app.post("/api/suggest-roi")
@@ -159,7 +170,7 @@ def analyze(payload: AnalyzeRequest):
 
         body = result["body_load"]
         return {
-            "version": "11.1",
+            "version": "11.2",
             "overall_comparison_label": result.get("overall_comparison_label", "評価保留"),
             "best_item": result.get("best_item", ""),
             "lowest_item": result.get("lowest_item", ""),
