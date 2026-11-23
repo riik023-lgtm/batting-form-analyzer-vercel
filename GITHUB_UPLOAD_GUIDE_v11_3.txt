@@ -1,0 +1,18 @@
+GitHubアップロード手順
+
+1. ZIPを解凍
+2. GitHubの batting-form-analyzer-vercel を開く
+3. Add file → Upload files
+4. 解凍した中の
+   - frontend フォルダ
+   - backend フォルダ
+   - README.md
+   - CHANGELOG_v11_3.txt
+   をドラッグ＆ドロップ
+5. Commit message:
+   Update to ver.11.3 draggable crop
+6. Commit directly to main
+7. Vercelの最新DeploymentがReadyになるまで待つ
+8. https://batting-form-analyzer-vercel.vercel.app/api/health を開く
+9. version 11.3 / roi 2d-crop を確認
+10. アプリで縦動画を選び、赤枠の四隅を直接動かして解析

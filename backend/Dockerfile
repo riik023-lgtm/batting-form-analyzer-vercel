@@ -2,7 +2,6 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# OpenCV / MediaPipe / FFmpeg が必要とするLinux共有ライブラリ
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libgl1 \
@@ -27,5 +26,4 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 COPY . /app
 
-# Vercel Container Runtime が渡す PORT を使用
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-3000}"]

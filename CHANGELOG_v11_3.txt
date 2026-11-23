@@ -1,0 +1,10 @@
+Batting Form Analyzer ver.11.3
+
+- 2D draggable crop UI
+- 4 corner handles + center move handle
+- portrait / landscape video support
+- backend x/y/width/height crop
+- auto ROI search across multiple candidate regions
+- MediaPipe input resize based on longest side
+- clearer non-JSON server error handling
+- keeps Private Blob and Vercel Container Runtime

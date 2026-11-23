@@ -11,15 +11,20 @@ import requests
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field, HttpUrl
 
-import analysis_engine as engine
+import analysis_engine_v113 as engine
 import risk_analysis
 
-app = FastAPI(title="Batting Form Analyzer API", version="11.2")
+app = FastAPI(title="Batting Form Analyzer API", version="11.3")
 
 
 class Roi(BaseModel):
-    center: float = Field(0.5, ge=0.0, le=1.0)
-    width: float = Field(0.6, ge=0.18, le=1.0)
+    # ver.11.3: 実映像に対する2D矩形ROI。すべて0〜1の割合。
+    x: float | None = Field(0.08, ge=0.0, le=1.0)
+    y: float = Field(0.08, ge=0.0, le=1.0)
+    width: float = Field(0.84, ge=0.12, le=1.0)
+    height: float = Field(0.84, ge=0.18, le=1.0)
+    # ver.11.2の古いクライアント互換用
+    center: float | None = Field(None, ge=0.0, le=1.0)
 
 
 class RoiRequest(BaseModel):
@@ -39,13 +44,11 @@ class AnalyzeRequest(BaseModel):
 
 def _download(url: str, prefix: str) -> Path:
     suffix = Path(url.split("?")[0]).suffix.lower()
-    if suffix not in {".mp4", ".mov", ".m4v", ".avi", ".mkv"}:
+    if suffix not in {".mp4", ".mov", ".m4v", ".avi", ".mkv", ".webm"}:
         suffix = ".mp4"
     path = Path(tempfile.gettempdir()) / f"bfa_{prefix}_{uuid.uuid4().hex}{suffix}"
     try:
         headers = {}
-        # Private Vercel BlobはURLだけでは取得できないため、接続時に作成した
-        # BLOB_READ_WRITE_TOKENをサーバー側だけで使う。
         if ".private.blob.vercel-storage.com" in url:
             token = os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip()
             if not token:
@@ -60,6 +63,9 @@ def _download(url: str, prefix: str) -> Path:
                 for chunk in response.iter_content(chunk_size=1024 * 1024):
                     if chunk:
                         f.write(chunk)
+    except HTTPException:
+        path.unlink(missing_ok=True)
+        raise
     except Exception as exc:
         path.unlink(missing_ok=True)
         raise HTTPException(status_code=400, detail=f"動画を取得できませんでした: {exc}") from exc
@@ -112,7 +118,7 @@ def _analysis_meta(analysis):
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "version": "11.2", "runtime": "python"}
+    return {"ok": True, "version": "11.3", "runtime": "python", "roi": "2d-crop"}
 
 
 @app.post("/api/suggest-roi")
@@ -121,8 +127,10 @@ def suggest_roi(payload: RoiRequest):
     try:
         roi = engine.suggest_batter_roi(video_path)
         return {
-            "center": _finite(roi.get("center", 0.5)),
-            "width": _finite(roi.get("width", 0.6)),
+            "x": _finite(roi.get("x", 0.08)),
+            "y": _finite(roi.get("y", 0.08)),
+            "width": _finite(roi.get("width", 0.84)),
+            "height": _finite(roi.get("height", 0.84)),
             "confidence": _finite(roi.get("confidence", 0.0)),
         }
     finally:
@@ -170,7 +178,7 @@ def analyze(payload: AnalyzeRequest):
 
         body = result["body_load"]
         return {
-            "version": "11.2",
+            "version": "11.3",
             "overall_comparison_label": result.get("overall_comparison_label", "評価保留"),
             "best_item": result.get("best_item", ""),
             "lowest_item": result.get("lowest_item", ""),
@@ -192,4 +200,3 @@ def analyze(payload: AnalyzeRequest):
     finally:
         ref_path.unlink(missing_ok=True)
         tar_path.unlink(missing_ok=True)
-        # /tmp is ephemeral; no user video is intentionally retained here.
