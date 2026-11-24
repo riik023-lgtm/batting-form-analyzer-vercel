@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field, HttpUrl
 import analysis_engine_v113 as engine
 import risk_analysis
 
-app = FastAPI(title="Batting Form Analyzer API", version="11.3")
+app = FastAPI(title="Batting Form Analyzer API", version="11.5")
 
 
 class Roi(BaseModel):
@@ -38,6 +38,11 @@ class AnalyzeRequest(BaseModel):
     selected_features: list[str]
     reference_roi: Roi = Roi()
     target_roi: Roi = Roi()
+    # ver.11.4: STEP 3でユーザーが指定した動画時刻（秒）。
+    # 実際のFPSは解析後に判明するため、サーバー側で最寄りフレームへ変換する。
+    reference_impact_time: float | None = Field(None, ge=0.0)
+    target_impact_time: float | None = Field(None, ge=0.0)
+    # 旧クライアント互換
     reference_impact_frame: int | None = None
     target_impact_frame: int | None = None
 
@@ -118,7 +123,7 @@ def _analysis_meta(analysis):
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "version": "11.3", "runtime": "python", "roi": "2d-crop"}
+    return {"ok": True, "version": "11.5", "runtime": "python", "roi": "2d-crop", "impact": "manual-time"}
 
 
 @app.post("/api/suggest-roi")
@@ -160,11 +165,22 @@ def analyze(payload: AnalyzeRequest):
             target_batter_roi=payload.target_roi.model_dump(),
         )
 
-        if payload.reference_impact_frame is not None or payload.target_impact_frame is not None:
+        ref_manual_frame = payload.reference_impact_frame
+        tar_manual_frame = payload.target_impact_frame
+
+        if payload.reference_impact_time is not None:
+            ref_fps = max(float(result["reference_analysis"].fps), 1e-6)
+            ref_manual_frame = int(round(payload.reference_impact_time * ref_fps))
+        if payload.target_impact_time is not None:
+            tar_fps = max(float(result["target_analysis"].fps), 1e-6)
+            tar_manual_frame = int(round(payload.target_impact_time * tar_fps))
+
+        # ユーザーが指定した側だけ手動時刻を使い、未指定側は自動推定を維持する。
+        if ref_manual_frame is not None or tar_manual_frame is not None:
             result = engine.recalculate_with_manual_impacts(
                 result,
-                payload.reference_impact_frame if payload.reference_impact_frame is not None else result["reference_analysis"].impact_frame,
-                payload.target_impact_frame if payload.target_impact_frame is not None else result["target_analysis"].impact_frame,
+                ref_manual_frame if ref_manual_frame is not None else result["reference_analysis"].impact_frame,
+                tar_manual_frame if tar_manual_frame is not None else result["target_analysis"].impact_frame,
                 payload.selected_features,
                 payload.batter_side,
             )
@@ -178,7 +194,7 @@ def analyze(payload: AnalyzeRequest):
 
         body = result["body_load"]
         return {
-            "version": "11.3",
+            "version": "11.5",
             "overall_comparison_label": result.get("overall_comparison_label", "評価保留"),
             "best_item": result.get("best_item", ""),
             "lowest_item": result.get("lowest_item", ""),

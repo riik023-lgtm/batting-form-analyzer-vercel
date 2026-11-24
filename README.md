@@ -1,43 +1,21 @@
-# Batting Form Analyzer ver.11.3 — Vercel edition
+# Batting Form Analyzer ver.11.5 — Vercel edition
 
-ver.11.3では、STEP 3の解析範囲指定を2D矩形クロップへ変更しました。
+ver.11.5では、ver.11.4の「四隅ドラッグ式ROI＋手動インパクト指定」に加え、参考練習動画と共有機能を改善しました。
 
-## ver.11.3の主な変更
+## 主な変更
 
-- 「左寄り / 中央 / 右寄り / 画面全体」ボタンを廃止
-- 横位置・幅のスライダーを廃止
-- 赤枠の四隅をマウス / 指で直接ドラッグしてリサイズ
-- 赤枠中央の「＋」をドラッグして枠全体を移動
-- 縦動画・横動画を自動判定して、実映像と赤枠の座標を一致
-- Python側も x / y / width / height を使って実際に2Dクロップ
-- MediaPipeへ渡す前にクロップ画像の最大辺を1280pxへ縮小
-- 自動打者位置推定も縦横の複数領域を探索
-- JSON以外のサーバーエラーでも画面に分かりやすいエラーを表示
-- Private Vercel Blob / Container Runtime構成はver.11.2から継続
+- 改善ポイントの参考動画を日本語優先へ変更
+- 8項目すべてに日本語の参考動画を設定
+- 従来の海外動画は「海外版も見る」として予備リンクを保持
+- アプリ上部に「共有する」「リンクをコピー」を追加
+- 共有先はProduction URL: https://batting-form-analyzer-vercel.vercel.app/
+- スマホではWeb Share APIが使える場合、LINE等の共有シートを直接開く
+- PCや非対応ブラウザではリンクをクリップボードへコピー
 
-## GitHubへアップロード
+## 参考動画について
 
-このZIPの中身を既存の `batting-form-analyzer-vercel` リポジトリへアップロードしてください。
+参考動画は研究根拠そのものではなく、解析結果から示した改善方向を実践するためのドリル例です。動画の内容・公開状況は投稿者側で変更される場合があります。
 
-上書き:
-- `frontend/app/page.tsx`
-- `frontend/app/globals.css`
-- `backend/main.py`
-- `README.md`
+## 公開前の確認
 
-新規:
-- `backend/analysis_engine_v113.py`
-
-既存の次のファイルは削除しません:
-- `backend/analysis_engine.py`
-- `backend/risk_analysis.py`
-- `backend/Dockerfile`
-- `backend/requirements.txt`
-- `vercel.toml`
-
-Commit message例:
-`Update to ver.11.3 draggable crop`
-
-Vercelが自動デプロイした後、
-`/api/health`
-を開き、`version: 11.3` と `roi: 2d-crop` が返れば新バックエンドが反映されています。
+VercelのProduction URLをシークレットウィンドウとスマホのモバイル回線で開き、ログインなしで利用できることを確認してください。Deployment Protectionを有効にしている場合はProductionの公開設定も確認してください。

@@ -439,6 +439,101 @@ def analyze_video(video_path, batter_side, prefix, batter_roi=None):
     return analysis
 
 
+
+
+# ver.11.5: 日本語の練習動画を優先し、海外動画を予備リンクとして保持する。
+# 参考動画は研究根拠そのものではなく、改善ドリルの実演例として提示する。
+_FOREIGN_PRACTICE_VIDEOS = dict(getattr(base, "PRACTICE_VIDEOS", {}))
+
+_JAPANESE_PRACTICE_VIDEOS = {
+    "身体を開くな": {
+        "title": "バッティングの『開き』は肩が重要！！最も力が伝わるヘソの前でボールをとらえろ！！",
+        "provider": "木村昇吾 実践!野球チャンネル",
+        "url": "https://www.youtube.com/watch?v=ExGFWXxTLpc",
+        "note": "身体の開きを肩の向きと打点の関係から説明。『開きを抑える』を単純な固定として扱わないための参考。",
+    },
+    "割れを作れ": {
+        "title": "バッティングの『割れ』の体勢の必要性と動作習得のためのドリル・トレーニング",
+        "provider": "前田健 野球動作解説TV",
+        "url": "https://www.youtube.com/watch?v=quc-2acmK0Y",
+        "note": "割れの意味と動作習得ドリルを日本語で詳しく解説。肩―骨盤の捻転差を確認する際の参考。",
+    },
+    "ボールを引きつけろ": {
+        "title": "インサイドアウトが出来ないとバットに力が上手く伝わらない!? 克服する練習法",
+        "provider": "木村昇吾 実践!野球チャンネル",
+        "url": "https://www.youtube.com/watch?v=3PwGCQxZSWs",
+        "note": "手部が身体から離れ過ぎる外回りを見直し、インサイドアウトの軌道を確認するための参考。",
+    },
+    "軸をぶらすな": {
+        "title": "軸がブレやすい人必見！回転速度を上げるおすすめドリル",
+        "provider": "Be Baseball Academy / JBS武蔵TV",
+        "url": "https://www.youtube.com/watch?v=1qkdStcTACo",
+        "note": "回転時の軸ブレを抑えるドリル。横移動をゼロにするのではなく、回転中心を確認する参考。",
+    },
+    "壁を作れ": {
+        "title": "壁と壁の解放を意識したスイング",
+        "provider": "野球の未来を創るBASEBALL FUTURE",
+        "url": "https://www.youtube.com/watch?v=nvTB5nygB00",
+        "note": "インパクトまで前足と体幹で壁を作り、その後に解放する動きを実演。前脚の受け止めの参考。",
+    },
+    "頭を残せ": {
+        "title": "頭が動く選手は要確認！確率を上げるバッティング練習",
+        "provider": "Amazing TV",
+        "url": "https://www.youtube.com/watch?v=RAJ-r9ClGlo",
+        "note": "頭部の大きな移動を抑える練習例。頭を完全固定するのではなく、視線と体幹姿勢を確認する参考。",
+    },
+    "体重移動をしろ": {
+        "title": "体重移動が苦手で打球が弱い…打球スピードを上げる為の必須練習",
+        "provider": "Be Baseball Academy / JBS武蔵TV",
+        "url": "https://www.youtube.com/watch?v=gRba_eivU-k",
+        "note": "支点移動を使った体重移動ドリル。前方移動から回転へのつながりを確認する参考。",
+    },
+    "腰を使え": {
+        "title": "『腰を回せ！』はNG!? 回旋効率を上げる為の練習方法",
+        "provider": "Be Baseball Academy / JBS武蔵TV",
+        "url": "https://www.youtube.com/watch?v=yRK3bvBUAe8",
+        "note": "腰だけを速く回すのではなく、全身の回旋効率を高める練習。骨盤と肩の連動を見る際の参考。",
+    },
+}
+
+# 元の改善提案関数はPRACTICE_VIDEOSを参照するため、日本語辞書へ差し替える。
+base.PRACTICE_VIDEOS = _JAPANESE_PRACTICE_VIDEOS
+_original_generate_improvement_advice = base.generate_improvement_advice
+
+
+def _generate_improvement_advice_japanese_first(score_df, ref, tar):
+    df = _original_generate_improvement_advice(score_df, ref, tar)
+    if df is None or len(df) == 0:
+        return df
+
+    display_to_key = {
+        cfg.get("display_name", key): key
+        for key, cfg in getattr(base, "FEATURES", {}).items()
+    }
+    backup_titles = []
+    backup_providers = []
+    backup_urls = []
+    backup_notes = []
+
+    for _, row in df.iterrows():
+        key = display_to_key.get(str(row.get("観点", "")), "")
+        backup = _FOREIGN_PRACTICE_VIDEOS.get(key, {})
+        backup_titles.append(backup.get("title", ""))
+        backup_providers.append(backup.get("provider", ""))
+        backup_urls.append(backup.get("url", ""))
+        backup_notes.append(backup.get("note", ""))
+
+    df = df.copy()
+    df["予備動画タイトル"] = backup_titles
+    df["予備動画提供元"] = backup_providers
+    df["予備動画URL"] = backup_urls
+    df["予備動画メモ"] = backup_notes
+    return df
+
+
+base.generate_improvement_advice = _generate_improvement_advice_japanese_first
+
+
 # 既存エンジンのrun_analysis内部から呼ばれる関数を差し替える。
 base.analyze_video = analyze_video
 base.suggest_batter_roi = suggest_batter_roi

@@ -1,0 +1,11 @@
+GitHubアップロード手順
+
+1. ZIPを解凍
+2. GitHubの batting-form-analyzer-vercel を開く
+3. Add file → Upload files
+4. 解凍した中身をそのままドラッグ＆ドロップ
+5. Commit message: Update to ver.11.5 Japanese videos and sharing
+6. Commit directly to main
+7. Vercelの最新DeploymentがReadyになったら /api/health を開く
+8. version が 11.5 なら反映成功
+9. シークレットウィンドウ・スマホ回線でもProduction URLを確認

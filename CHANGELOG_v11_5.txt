@@ -1,0 +1,7 @@
+Batting Form Analyzer ver.11.5
+
+- Japanese-first practice video recommendations
+- Overseas practice videos retained as fallback links
+- Share button for mobile share sheet
+- Copy Production URL button
+- Version bump to 11.5

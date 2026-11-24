@@ -1,0 +1,14 @@
+GitHubアップロード手順（ver.11.4）
+
+1. ZIPを解凍
+2. GitHubの batting-form-analyzer-vercel を開く
+3. Add file → Upload files
+4. 解凍した中身をドラッグ＆ドロップ
+5. Commit message:
+   Update to ver.11.4 manual impact selection
+6. Commit directly to main
+7. Vercelの最新DeploymentがReadyになるまで待つ
+8. 下記を開く
+   https://batting-form-analyzer-vercel.vercel.app/api/health
+9. version が 11.4、impact が manual-time なら成功
+10. STEP 3で赤枠を調整した後、動画をインパクトで止めて「この瞬間をインパクトに設定」を押す

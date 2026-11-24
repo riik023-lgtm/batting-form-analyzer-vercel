@@ -71,3 +71,35 @@ footer{margin-top:56px;text-align:center;color:#8a958f;font-size:12px}
   .practice-video{grid-template-columns:1fr}.practice-video a{width:100%}
   .crop-handle{width:32px;height:32px}.crop-move{width:50px;height:50px}
 }
+
+
+/* ver.11.4: STEP 3 manual impact selector */
+.impact-setter{margin-top:14px;padding:15px;border:1px solid var(--line);border-radius:14px;background:#f8faf9}
+.impact-setter-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.impact-setter-head strong{font-size:17px}.impact-setter-head p{margin:4px 0 0;color:var(--muted);font-size:13px;line-height:1.55}
+.impact-setter-head>span{white-space:nowrap;color:var(--green);font-weight:800;font-variant-numeric:tabular-nums}
+.impact-nudge-row{display:grid;grid-template-columns:auto 1fr auto;gap:8px;margin-top:12px}
+.impact-nudge-row button{border:1px solid #cfd9d4;background:#fff;border-radius:11px;padding:11px 12px;font-weight:700}
+.impact-nudge-row .impact-set-button{background:var(--green);border-color:var(--green);color:#fff;font-weight:800}
+.impact-confirmed{margin-top:14px;border-top:1px solid var(--line);padding-top:14px}
+.impact-confirmed-title{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}
+.impact-confirmed-title>div{display:flex;gap:10px;align-items:baseline}.impact-confirmed-title span{color:var(--green);font-weight:800}
+.impact-confirmed-title button{border:1px solid #e1b8b8;background:#fff;color:var(--red);border-radius:10px;padding:7px 10px}
+.impact-confirmed img{display:block;width:100%;max-height:360px;object-fit:contain;background:#101312;border-radius:12px}
+.impact-auto-note{margin-top:12px;padding:10px 12px;border-radius:10px;background:#eef2f0;color:var(--muted);font-size:13px;line-height:1.55}
+@media(max-width:640px){
+  .impact-setter-head{display:grid}.impact-setter-head>span{justify-self:start}
+  .impact-nudge-row{grid-template-columns:1fr 1fr}.impact-nudge-row .impact-set-button{grid-column:1/-1;grid-row:1}
+  .impact-confirmed-title{align-items:flex-start}.impact-confirmed-title>div{display:grid;gap:2px}
+}
+
+
+/* ver.11.5: public sharing + Japanese-first practice videos */
+.share-card{margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}
+.share-copy{display:grid;gap:5px}.share-copy strong{font-size:17px}.share-copy span{color:var(--muted);font-size:13px;line-height:1.5}.share-copy code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:#075b42;overflow-wrap:anywhere}
+.share-actions{display:flex;gap:8px;flex-wrap:wrap}.share-actions button{white-space:nowrap}.share-status{grid-column:1/-1;color:var(--green);font-weight:700}
+.practice-video-actions{display:grid;gap:7px;min-width:160px}.practice-video-actions a{width:100%}.practice-video-actions .practice-fallback{background:#fff;color:var(--green);border:1px solid #76a996}
+@media(max-width:640px){
+  .share-card{grid-template-columns:1fr}.share-actions{display:grid;grid-template-columns:1fr 1fr}.share-actions button{width:100%}
+  .practice-video-actions{width:100%}
+}

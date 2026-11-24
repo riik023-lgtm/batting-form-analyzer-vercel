@@ -43,6 +43,7 @@ const PORTRAIT_ROI: Roi = { x: 0.05, y: 0.12, width: 0.90, height: 0.82 };
 const LANDSCAPE_ROI: Roi = { x: 0.08, y: 0.08, width: 0.84, height: 0.84 };
 const MIN_ROI_WIDTH = 0.16;
 const MIN_ROI_HEIGHT = 0.20;
+const PUBLIC_APP_URL = 'https://batting-form-analyzer-vercel.vercel.app/';
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -117,17 +118,28 @@ function VideoCropCard({
   file,
   roi,
   onChange,
+  impactTime,
+  impactPreview,
+  onImpactSet,
+  onImpactClear,
 }: {
   title: string;
   file: File | null;
   roi: Roi;
   onChange: (roi: Roi) => void;
+  impactTime: number | null;
+  impactPreview: string;
+  onImpactSet: (time: number, preview: string) => void;
+  onImpactClear: () => void;
 }) {
   const url = useMemo(() => fileUrl(file), [file]);
   const stageRef = useRef<HTMLDivElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const initializedUrlRef = useRef('');
   const [drag, setDrag] = useState<DragState | null>(null);
   const [videoSize, setVideoSize] = useState({ width: 16, height: 9 });
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
 
@@ -172,11 +184,46 @@ function VideoCropCard({
     const width = Math.max(1, video.videoWidth || 16);
     const height = Math.max(1, video.videoHeight || 9);
     setVideoSize({ width, height });
+    setDuration(Number.isFinite(video.duration) ? video.duration : 0);
+    setCurrentTime(video.currentTime || 0);
 
     if (url && initializedUrlRef.current !== url) {
       initializedUrlRef.current = url;
       onChange(height > width ? PORTRAIT_ROI : LANDSCAPE_ROI);
     }
+  }
+
+  function seekBy(delta: number) {
+    const video = videoRef.current;
+    if (!video) return;
+    video.pause();
+    const maxTime = Number.isFinite(video.duration) ? Math.max(0, video.duration - 0.001) : Math.max(0, currentTime + delta);
+    const next = clamp(video.currentTime + delta, 0, maxTime);
+    video.currentTime = next;
+    setCurrentTime(next);
+  }
+
+  function captureImpact() {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth || !video.videoHeight) return;
+    video.pause();
+
+    const safe = normalizeRoi(roi);
+    const sx = Math.round(safe.x * video.videoWidth);
+    const sy = Math.round(safe.y * video.videoHeight);
+    const sw = Math.max(2, Math.round(safe.width * video.videoWidth));
+    const sh = Math.max(2, Math.round(safe.height * video.videoHeight));
+    const maxWidth = 600;
+    const scale = Math.min(1, maxWidth / sw);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(sw * scale));
+    canvas.height = Math.max(1, Math.round(sh * scale));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+
+    onImpactSet(video.currentTime, canvas.toDataURL('image/jpeg', 0.9));
   }
 
   const safeRoi = normalizeRoi(roi);
@@ -195,38 +242,71 @@ function VideoCropCard({
       </p>
 
       {file ? (
-        <div className={`crop-stage-shell ${portrait ? 'portrait' : 'landscape'}`}>
-          <div
-            className="crop-stage"
-            ref={stageRef}
-            style={{ aspectRatio: `${videoSize.width} / ${videoSize.height}` }}
-          >
-            <video
-              className="crop-video"
-              src={url}
-              controls
-              playsInline
-              preload="metadata"
-              onLoadedMetadata={handleMetadata}
-            />
-
+        <>
+          <div className={`crop-stage-shell ${portrait ? 'portrait' : 'landscape'}`}>
             <div
-              className="crop-box"
-              style={{
-                left: `${safeRoi.x * 100}%`,
-                top: `${safeRoi.y * 100}%`,
-                width: `${safeRoi.width * 100}%`,
-                height: `${safeRoi.height * 100}%`,
-              }}
+              className="crop-stage"
+              ref={stageRef}
+              style={{ aspectRatio: `${videoSize.width} / ${videoSize.height}` }}
             >
-              <button type="button" aria-label="左上を動かす" className="crop-handle nw" onPointerDown={(e) => beginDrag(e, 'nw')} />
-              <button type="button" aria-label="右上を動かす" className="crop-handle ne" onPointerDown={(e) => beginDrag(e, 'ne')} />
-              <button type="button" aria-label="左下を動かす" className="crop-handle sw" onPointerDown={(e) => beginDrag(e, 'sw')} />
-              <button type="button" aria-label="右下を動かす" className="crop-handle se" onPointerDown={(e) => beginDrag(e, 'se')} />
-              <button type="button" aria-label="枠全体を動かす" className="crop-move" onPointerDown={(e) => beginDrag(e, 'move')}>＋</button>
+              <video
+                ref={videoRef}
+                className="crop-video"
+                src={url}
+                controls
+                playsInline
+                preload="metadata"
+                onLoadedMetadata={handleMetadata}
+                onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                onSeeked={(e) => setCurrentTime(e.currentTarget.currentTime)}
+              />
+
+              <div
+                className="crop-box"
+                style={{
+                  left: `${safeRoi.x * 100}%`,
+                  top: `${safeRoi.y * 100}%`,
+                  width: `${safeRoi.width * 100}%`,
+                  height: `${safeRoi.height * 100}%`,
+                }}
+              >
+                <button type="button" aria-label="左上を動かす" className="crop-handle nw" onPointerDown={(e) => beginDrag(e, 'nw')} />
+                <button type="button" aria-label="右上を動かす" className="crop-handle ne" onPointerDown={(e) => beginDrag(e, 'ne')} />
+                <button type="button" aria-label="左下を動かす" className="crop-handle sw" onPointerDown={(e) => beginDrag(e, 'sw')} />
+                <button type="button" aria-label="右下を動かす" className="crop-handle se" onPointerDown={(e) => beginDrag(e, 'se')} />
+                <button type="button" aria-label="枠全体を動かす" className="crop-move" onPointerDown={(e) => beginDrag(e, 'move')}>＋</button>
+              </div>
             </div>
           </div>
-        </div>
+
+          <div className="impact-setter">
+            <div className="impact-setter-head">
+              <div>
+                <strong>インパクトを指定</strong>
+                <p>動画を止めて、バットがボールに当たる瞬間に合わせてください。</p>
+              </div>
+              <span>{currentTime.toFixed(3)}秒{duration > 0 ? ` / ${duration.toFixed(2)}秒` : ''}</span>
+            </div>
+
+            <div className="impact-nudge-row">
+              <button type="button" onClick={() => seekBy(-0.033)}>−0.03秒</button>
+              <button type="button" className="impact-set-button" onClick={captureImpact}>この瞬間をインパクトに設定</button>
+              <button type="button" onClick={() => seekBy(0.033)}>＋0.03秒</button>
+            </div>
+
+            {impactTime !== null && impactPreview ? (
+              <div className="impact-confirmed">
+                <div className="impact-confirmed-title">
+                  <div><b>設定したインパクト</b><span>{impactTime.toFixed(3)}秒</span></div>
+                  <button type="button" onClick={onImpactClear}>設定を解除</button>
+                </div>
+                <img src={impactPreview} alt={`${title}で指定したインパクト`} />
+              </div>
+            ) : (
+              <div className="impact-auto-note">未指定の場合は、解析時に自動推定したインパクトを使用します。</div>
+            )}
+          </div>
+        </>
       ) : <div className="empty-video">動画を選択してください</div>}
     </section>
   );
@@ -252,9 +332,12 @@ export default function Home() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
+  const [shareStatus, setShareStatus] = useState('');
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [refImpact, setRefImpact] = useState<number | null>(null);
-  const [tarImpact, setTarImpact] = useState<number | null>(null);
+  const [referenceImpactTime, setReferenceImpactTime] = useState<number | null>(null);
+  const [targetImpactTime, setTargetImpactTime] = useState<number | null>(null);
+  const [referenceImpactPreview, setReferenceImpactPreview] = useState('');
+  const [targetImpactPreview, setTargetImpactPreview] = useState('');
 
   useEffect(() => {
     try {
@@ -267,6 +350,35 @@ export default function Home() {
   }, [players]);
 
   const selectedPlayer = players.find(p => p.id === selectedPlayerId);
+
+  async function copyShareLink() {
+    try {
+      await navigator.clipboard.writeText(PUBLIC_APP_URL);
+      setShareStatus('共有リンクをコピーしました。');
+    } catch {
+      setShareStatus(`共有リンク：${PUBLIC_APP_URL}`);
+    }
+  }
+
+  async function shareApp() {
+    const payload = {
+      title: '打撃フォーム分析',
+      text: '比較選手と自分の打撃フォームを動画から比較できるアプリです。',
+      url: PUBLIC_APP_URL,
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(payload);
+        setShareStatus('共有画面を開きました。');
+      } else {
+        await copyShareLink();
+      }
+    } catch (e) {
+      if ((e as Error)?.name !== 'AbortError') {
+        await copyShareLink();
+      }
+    }
+  }
 
   function createPlayer() {
     const name = newPlayer.trim();
@@ -325,8 +437,8 @@ export default function Home() {
     }
   }
 
-  async function analyze(manual = false) {
-    setError(''); setResult(manual ? result : null); setUploadProgress(0);
+  async function analyze() {
+    setError(''); setResult(null); setUploadProgress(0);
     if (selectedFeatures.length !== 5) { setError('比較項目を5つ選択してください。'); return; }
     try {
       setStatus('動画をアップロードしています…');
@@ -342,14 +454,12 @@ export default function Home() {
           selected_features: selectedFeatures,
           reference_roi: normalizeRoi(referenceRoi),
           target_roi: normalizeRoi(targetRoi),
-          reference_impact_frame: manual ? refImpact : null,
-          target_impact_frame: manual ? tarImpact : null,
+          reference_impact_time: referenceImpactTime,
+          target_impact_time: targetImpactTime,
         }),
       });
       const data = await readJsonResponse(response);
       setResult(data);
-      setRefImpact(data.reference?.impact_frame ?? null);
-      setTarImpact(data.target?.impact_frame ?? null);
       setStatus('解析が完了しました。');
     } catch (e) {
       setError(e instanceof Error ? e.message : '解析に失敗しました。');
@@ -396,12 +506,25 @@ export default function Home() {
   return (
     <main>
       <header className="hero">
-        <div className="version">BATTING FORM ANALYZER · ver.11.3</div>
+        <div className="version">BATTING FORM ANALYZER · ver.11.5</div>
         <h1>打撃フォーム分析</h1>
         <p>比較選手との「違い」を動画から見つけ、改善の優先順位を整理します。</p>
       </header>
 
       <div className="notice">フォームの良し悪しや怪我の発生確率を採点するアプリではありません。単眼動画から取得できる運動学的な特徴を比較します。</div>
+
+      <section className="share-card">
+        <div className="share-copy">
+          <strong>このアプリを共有</strong>
+          <span>Productionを公開設定にしていれば、このリンクからスマホ・PCで利用できます。</span>
+          <code>{PUBLIC_APP_URL}</code>
+        </div>
+        <div className="share-actions">
+          <button type="button" className="primary" onClick={shareApp}>共有する</button>
+          <button type="button" className="secondary" onClick={copyShareLink}>リンクをコピー</button>
+        </div>
+        {shareStatus && <small className="share-status">{shareStatus}</small>}
+      </section>
 
       <section className="step">
         <span>STEP 1</span><h2>解析する選手</h2>
@@ -426,23 +549,41 @@ export default function Home() {
       <section className="step">
         <span>STEP 2</span><h2>動画を選択</h2>
         <div className="upload-grid">
-          <label className="upload-card"><strong>比較選手の動画</strong><input type="file" accept="video/*" onChange={(e)=>{setReferenceFile(e.target.files?.[0]||null);setReferenceBlobUrl('');setReferenceRoi(DEFAULT_ROI);setResult(null)}}/><small>{referenceFile?.name || '2〜5秒程度がおすすめ'}</small></label>
-          <label className="upload-card"><strong>自分の動画</strong><input type="file" accept="video/*" onChange={(e)=>{setTargetFile(e.target.files?.[0]||null);setTargetBlobUrl('');setTargetRoi(DEFAULT_ROI);setResult(null)}}/><small>{targetFile?.name || '同じ向き・近い画角がおすすめ'}</small></label>
+          <label className="upload-card"><strong>比較選手の動画</strong><input type="file" accept="video/*" onChange={(e)=>{setReferenceFile(e.target.files?.[0]||null);setReferenceBlobUrl('');setReferenceRoi(DEFAULT_ROI);setReferenceImpactTime(null);setReferenceImpactPreview('');setResult(null)}}/><small>{referenceFile?.name || '2〜5秒程度がおすすめ'}</small></label>
+          <label className="upload-card"><strong>自分の動画</strong><input type="file" accept="video/*" onChange={(e)=>{setTargetFile(e.target.files?.[0]||null);setTargetBlobUrl('');setTargetRoi(DEFAULT_ROI);setTargetImpactTime(null);setTargetImpactPreview('');setResult(null)}}/><small>{targetFile?.name || '同じ向き・近い画角がおすすめ'}</small></label>
         </div>
         <div className="card feature-card"><h3>比較する5項目</h3><div className="feature-grid">{FEATURE_OPTIONS.map(([key,label])=><label key={key} className={selectedFeatures.includes(key)?'feature selected':'feature'}><input type="checkbox" checked={selectedFeatures.includes(key)} onChange={()=>toggleFeature(key)}/><span>{label}</span></label>)}</div><p className="muted">{selectedFeatures.length} / 5 選択中</p></div>
       </section>
 
       <section className="step">
-        <span>STEP 3</span><h2>打者の範囲を決める</h2>
-        <p className="step-guide">赤枠はそのまま解析に使われます。縦動画・横動画どちらでも、打者が大きく入るように四隅を調整してください。</p>
+        <span>STEP 3</span><h2>解析範囲とインパクトを決める</h2>
+        <p className="step-guide">① 赤枠の四隅を動かして打者を囲み、② 動画をインパクトの瞬間で止めて設定してください。インパクトを指定しない場合だけ自動推定を使います。</p>
         <button className="secondary full" type="button" onClick={suggestRoi} disabled={!referenceFile || !targetFile}>2本とも自動で打者位置を探す</button>
-        <VideoCropCard title="比較選手" file={referenceFile} roi={referenceRoi} onChange={setReferenceRoi}/>
-        <VideoCropCard title="自分" file={targetFile} roi={targetRoi} onChange={setTargetRoi}/>
+        <VideoCropCard
+          title="比較選手"
+          file={referenceFile}
+          roi={referenceRoi}
+          onChange={(next) => { setReferenceRoi(next); setReferenceImpactTime(null); setReferenceImpactPreview(''); }}
+          impactTime={referenceImpactTime}
+          impactPreview={referenceImpactPreview}
+          onImpactSet={(time, preview) => { setReferenceImpactTime(time); setReferenceImpactPreview(preview); }}
+          onImpactClear={() => { setReferenceImpactTime(null); setReferenceImpactPreview(''); }}
+        />
+        <VideoCropCard
+          title="自分"
+          file={targetFile}
+          roi={targetRoi}
+          onChange={(next) => { setTargetRoi(next); setTargetImpactTime(null); setTargetImpactPreview(''); }}
+          impactTime={targetImpactTime}
+          impactPreview={targetImpactPreview}
+          onImpactSet={(time, preview) => { setTargetImpactTime(time); setTargetImpactPreview(preview); }}
+          onImpactClear={() => { setTargetImpactTime(null); setTargetImpactPreview(''); }}
+        />
       </section>
 
       <section className="step">
         <span>STEP 4</span><h2>解析</h2>
-        <button className="primary full" type="button" onClick={()=>analyze(false)} disabled={!referenceFile || !targetFile || selectedFeatures.length!==5}>高精度解析を開始</button>
+        <button className="primary full" type="button" onClick={analyze} disabled={!referenceFile || !targetFile || selectedFeatures.length!==5}>高精度解析を開始</button>
         {(status || uploadProgress > 0) && <div className="status"><div>{status}</div>{uploadProgress>0 && uploadProgress<100 && <progress value={uploadProgress} max="100"/>}</div>}
         {error && <div className="error">{error}</div>}
       </section>
@@ -460,17 +601,10 @@ export default function Home() {
         <div className="feature-results">{(result.features||[]).map((row:any)=><article className="result-card" key={row['表示名']}><div className="result-card-head"><h3>{row['表示名']}</h3><span className={`level ${row['比較判定']}`}>{row['比較判定']}</span></div><div className="value-flow"><b>{row['比較選手表示']}</b><span>→</span><b>{row['自分表示']}</b></div><p>{row['差の方向']}</p><small>{row['計測内容']}</small></article>)}</div>
 
         <h2>今回優先して確認したいポイント</h2>
-        <div className="advice-list">{(result.advice||[]).map((row:any,i:number)=><article className="advice" key={`${row['観点']}-${i}`}><div className="rank">{i+1}</div><div><h3>{row['観点']}</h3><p><b>比較結果：</b>{row['比較結果']}</p><p><b>動作の特徴：</b>{row['動作の特徴']}</p><p><b>改善の方向性：</b>{row['改善の方向性']}</p><p><b>練習例：</b>{row['練習例']}</p>{row['参考動画URL'] && <div className="practice-video"><div><b>参考動画</b><span>{row['参考動画提供元']}</span><strong>{row['参考動画タイトル']}</strong>{row['参考動画メモ'] && <small>{row['参考動画メモ']}</small>}</div><a href={row['参考動画URL']} target="_blank" rel="noopener noreferrer">▶ 参考動画を見る</a></div>}<small>研究上の位置づけ：{row['研究上の位置づけ']}</small></div></article>)}</div>
+        <div className="advice-list">{(result.advice||[]).map((row:any,i:number)=><article className="advice" key={`${row['観点']}-${i}`}><div className="rank">{i+1}</div><div><h3>{row['観点']}</h3><p><b>比較結果：</b>{row['比較結果']}</p><p><b>動作の特徴：</b>{row['動作の特徴']}</p><p><b>改善の方向性：</b>{row['改善の方向性']}</p><p><b>練習例：</b>{row['練習例']}</p>{row['参考動画URL'] && <div className="practice-video"><div><b>参考動画（日本語優先）</b><span>{row['参考動画提供元']}</span><strong>{row['参考動画タイトル']}</strong>{row['参考動画メモ'] && <small>{row['参考動画メモ']}</small>}</div><div className="practice-video-actions"><a href={row['参考動画URL']} target="_blank" rel="noopener noreferrer">▶ 日本語動画を見る</a>{row['予備動画URL'] && <a className="practice-fallback" href={row['予備動画URL']} target="_blank" rel="noopener noreferrer">海外版も見る</a>}</div></div>}<small>研究上の位置づけ：{row['研究上の位置づけ']}</small></div></article>)}</div>
 
         <h2>身体負担に関連する動作</h2>
         <div className="body-load"><strong>{result.body_load?.overall_label}</strong><p>怪我の診断・予測ではなく、先行研究で議論される動作との照合です。</p>{(result.body_load?.regions||[]).map((row:any)=><div className="body-row" key={row['部位']}><b>{row['部位']}</b><span>{row['判定']}</span><small>{row['主な計測proxy']}</small></div>)}</div>
-
-        <h2>インパクト候補</h2>
-        <div className="two-col">
-          <div className="card"><h3>比較選手</h3>{(result.reference?.impact_candidates||[]).map((c:any)=><label className="radio-row" key={c.frame}><input type="radio" name="ref-impact" checked={refImpact===c.frame} onChange={()=>setRefImpact(c.frame)}/><span>{c.time?.toFixed?.(3)}秒（frame {c.frame}）</span></label>)}</div>
-          <div className="card"><h3>自分</h3>{(result.target?.impact_candidates||[]).map((c:any)=><label className="radio-row" key={c.frame}><input type="radio" name="tar-impact" checked={tarImpact===c.frame} onChange={()=>setTarImpact(c.frame)}/><span>{c.time?.toFixed?.(3)}秒（frame {c.frame}）</span></label>)}</div>
-        </div>
-        <button className="secondary full" type="button" onClick={()=>analyze(true)}>選んだインパクトで再計算</button>
 
         <div className="save-row">{selectedPlayer && <button className="primary" type="button" onClick={saveHistory}>この結果を{selectedPlayer.name}の履歴に保存</button>}<button className="danger" type="button" onClick={cleanupVideos}>アップロード動画を削除</button></div>
         <p className="muted center">動画はPrivate Blobに一時保存されます。解析終了後は「アップロード動画を削除」を押してください。</p>
@@ -478,7 +612,7 @@ export default function Home() {
 
       {selectedPlayer && selectedPlayer.histories.length > 0 && <section className="step"><span>HISTORY</span><h2>{selectedPlayer.name} の解析履歴</h2><div className="history-list">{selectedPlayer.histories.map(h=><div className="history-item" key={h.id}><time>{new Date(h.createdAt).toLocaleString('ja-JP')}</time><b>{h.overall}</b><span>近い：{h.best}</span><span>差大：{h.lowest}</span></div>)}</div></section>}
 
-      <footer>Batting Form Analyzer ver.11.3 · Vercel / Next.js / FastAPI / MediaPipe</footer>
+      <footer>Batting Form Analyzer ver.11.5 · Vercel / Next.js / FastAPI / MediaPipe</footer>
     </main>
   );
 }
